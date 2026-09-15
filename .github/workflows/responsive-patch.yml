@@ -13,9 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Inject shared responsive fixes into bundled pages
+      - name: Restore bundled site and inject shared UI scripts
         shell: bash
         run: |
+          set -e
+          # Preserve the existing multi-page bundle for every route except the homepage.
+          git show 4c76b135a2c2f1748f4d13944a9459f58d7b73c5:index.html > index.html
           python - <<'PY'
           from pathlib import Path
           p = Path('index.html')
@@ -24,18 +27,16 @@ jobs:
               '<script src="/responsive-fixes.js"></script>',
               '<script src="/responsive-frame.js"></script>',
               '<script src="/contact-demo.js"></script>',
-              '<script src="/premium-redesign.js"></script>'
+              '<script src="/premium-redesign.js"></script>',
+              '<script src="/home-redesign.js"></script>'
           ]
           needle = "</body>\n</html>"
           if needle not in s:
               raise SystemExit('Could not find document footer marker')
-          changed = False
           for marker in markers:
               if marker not in s:
                   s = s.replace(needle, marker + "\n" + needle, 1)
-                  changed = True
-          if changed:
-              p.write_text(s)
+          p.write_text(s)
           PY
       - name: Commit patched bundle
         run: |
@@ -46,5 +47,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Apply shared responsive UI UX fixes'
+          git commit -m 'Restore multi-page bundle and apply homepage redesign'
           git push
