@@ -20,12 +20,19 @@ jobs:
           from pathlib import Path
           p = Path('index.html')
           s = p.read_text()
-          marker = "<script src=\"/responsive-fixes.js\"></script>"
-          if marker not in s:
-              needle = "</body>\n</html>"
-              if needle not in s:
-                  raise SystemExit('Could not find document footer marker')
-              s = s.replace(needle, marker + "\n" + needle, 1)
+          markers = [
+              '<script src="/responsive-fixes.js"></script>',
+              '<script src="/responsive-frame.js"></script>'
+          ]
+          needle = "</body>\n</html>"
+          if needle not in s:
+              raise SystemExit('Could not find document footer marker')
+          changed = False
+          for marker in markers:
+              if marker not in s:
+                  s = s.replace(needle, marker + "\n" + needle, 1)
+                  changed = True
+          if changed:
               p.write_text(s)
           PY
       - name: Commit patched bundle
