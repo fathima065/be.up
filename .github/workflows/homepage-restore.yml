@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Restore original stable bundle without Home overlays
+      - name: Restore stable bundle
         shell: bash
         run: |
           set -e
@@ -23,20 +23,16 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           import re
-          p=Path('index.html')
-          s=p.read_text()
-          # These scripts are the source of the injected Home graph/contact redesign.
-          s=re.sub(r'\s*<script\s+src=["\']/(?:contact-demo|premium-redesign)\.js["\']\s*></script>', '', s, flags=re.I)
-          # Keep only the shared responsive frame helper; do not inject any Home redesign.
-          if '<script src="/responsive-frame.js"></script>' not in s:
-              s=s.replace('</body>\n</html>', '<script src="/responsive-frame.js"></script>\n</body>\n</html>', 1)
-          p.write_text(s)
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          s = re.sub(r'\s*<script\s+src=["\']/(?:responsive-fixes|responsive-frame|contact-demo|premium-redesign|home-redesign|home-iframe-fix|home-meta|home-production|home-reference-style|site-production|site-shell)\.js["\']\s*></script>', '', s, flags=re.I)
+          p.write_text(s, encoding='utf-8')
           PY
-      - name: Commit original Home bundle
+      - name: Commit stable bundle
         run: |
           if git diff --quiet; then exit 0; fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Stop Home redesign and contact injection scripts'
+          git commit -m 'Restore stable site without injected redesign scripts'
           git push
