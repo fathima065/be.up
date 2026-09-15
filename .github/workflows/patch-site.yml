@@ -1,114 +1,14 @@
 name: Apply be.up website fixes
 
 on:
-  push:
-    paths:
-      - '.github/workflows/patch-site.yml'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch-site:
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Patch website safely
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          import re
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-
-          # Remove the explanatory shell note and the unwanted audience card,
-          # whether the text is escaped inside PAGES or plain HTML.
-          s = re.sub(r'<div class="note">\s*Each page below is the original file, rendered in its own isolated frame.*?</div>\s*', '', s, flags=re.S)
-          s = re.sub(r'<div class=\\?"aud-card\\?">\\?<h4>Preparing to Scale</h4>\\?<p>Build the capabilities required for the next stage\\?\.</p>\\?</div>\\?\\?n?', '', s)
-          s = re.sub(r'<div class="aud-card"><h4>Preparing to Scale</h4><p>Build the capabilities required for the next stage\.</p></div>', '', s)
-
-          # Replace the shell navigation controller without relying on the
-          # exact whitespace/formatting of the original file.
-          pattern = r'  function showPage\(key\)\{.*?showPage\(\x27home\x27\);'
-          replacement = r'''  var ROUTES = {
-    home: '/',
-    about: '/about',
-    approach: '/approach',
-    services: '/services',
-    industries: '/industries',
-    'industry-detail': '/industries/professional-services',
-    insights: '/insights',
-    'insights-article': '/insights/sample-article',
-    contact: '/contact',
-    checkup: '/business-growth-checkup',
-    book: '/book-consultation'
-  };
-
-  var PATH_TO_KEY = {};
-  Object.keys(ROUTES).forEach(function(key){ PATH_TO_KEY[ROUTES[key]] = key; });
-  PATH_TO_KEY['/business-growth-checkup'] = 'checkup';
-  PATH_TO_KEY['/book'] = 'book';
-  PATH_TO_KEY['/insights/sample-article'] = 'insights-article';
-
-  function keyForPath(path){
-    if(PATH_TO_KEY[path]) return PATH_TO_KEY[path];
-    if(/^\/services\//.test(path)) return 'services';
-    if(/^\/industries\//.test(path)) return path === '/industries/professional-services' ? 'industry-detail' : 'industries';
-    return null;
-  }
-
-  function showPage(key, updateUrl){
-    if(!PAGES[key]){
-      errBanner.textContent = 'Page "' + key + '" was not found in this bundle.';
-      errBanner.style.display = 'block';
-      return;
-    }
-    errBanner.style.display = 'none';
-    frame.srcdoc = PAGES[key];
-    buttons.forEach(function(b){ b.classList.toggle('active', b.dataset.key === key); });
-    if(updateUrl !== false && ROUTES[key] && window.location.pathname !== ROUTES[key]){
-      window.history.pushState({key:key}, '', ROUTES[key]);
-    }
-  }
-
-  function bindFrameLinks(){
-    try{
-      var doc = frame.contentDocument;
-      if(!doc) return;
-      doc.addEventListener('click', function(event){
-        var link = event.target.closest ? event.target.closest('a[href]') : null;
-        if(!link) return;
-        var raw = link.getAttribute('href');
-        if(!raw || raw.charAt(0) !== '/') return;
-        var path = raw.split('?')[0].split('#')[0];
-        var key = keyForPath(path);
-        if(key){
-          event.preventDefault();
-          event.stopPropagation();
-          showPage(key, true);
-        }
-      }, true);
-    }catch(e){}
-  }
-
-  buttons.forEach(function(b){
-    b.addEventListener('click', function(){ showPage(b.dataset.key, true); });
-  });
-  frame.addEventListener('load', bindFrameLinks);
-  window.addEventListener('popstate', function(){
-    showPage(keyForPath(window.location.pathname) || 'home', false);
-  });
-
-  showPage(keyForPath(window.location.pathname) || 'home', false);'''
-          s2, n = re.subn(pattern, replacement, s, count=1, flags=re.S)
-          if n != 1:
-              raise SystemExit('Could not locate the shell navigation controller; no changes committed.')
-          p.write_text(s2, encoding='utf-8')
-          PY
-          git config user.name 'be.up Website Bot'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html .github/workflows/patch-site.yml
-          git diff --cached --check
-          git commit -m 'Fix homepage navigation and simplify who we help'
-          git push
+      - name: Deprecated workflow
+        run: echo 'Deprecated: homepage-restore.yml is the only active site patch workflow.'
