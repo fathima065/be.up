@@ -1,0 +1,41 @@
+name: be.up responsive patch
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inject shared responsive fixes into bundled pages
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          marker = "<script src=\"/responsive-fixes.js\"></script>"
+          if marker not in s:
+              needle = "</body>\n</html>"
+              if needle not in s:
+                  raise SystemExit('Could not find document footer marker')
+              s = s.replace(needle, marker + "\n" + needle, 1)
+              p.write_text(s)
+          PY
+      - name: Commit patched bundle
+        run: |
+          if git diff --quiet; then
+            echo 'No patch needed.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Apply shared responsive UI UX fixes'
+          git push
