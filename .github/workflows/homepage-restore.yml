@@ -15,28 +15,28 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Restore stable site bundle
+      - name: Restore original stable bundle without Home overlays
         shell: bash
         run: |
           set -e
           git show 27ad1ab71696d0518c18dc2c1712075cebb9085f:index.html > index.html
           python - <<'PY'
           from pathlib import Path
+          import re
           p=Path('index.html')
           s=p.read_text()
-          marker='<script src="/responsive-frame.js"></script>'
-          cleanup='''<script>\n(function(){\n  function clean(){\n    var f=document.getElementById('page-frame');\n    if(!f || !f.contentDocument) return;\n    var d=f.contentDocument;\n    d.querySelectorAll('.beup-services-graph,.beup-contact-section').forEach(function(el){el.remove();});\n  }\n  function hook(){\n    var f=document.getElementById('page-frame');\n    if(!f) return;\n    f.addEventListener('load',function(){\n      clean();\n      if(f.contentDocument && f.contentDocument.body){\n        new MutationObserver(clean).observe(f.contentDocument.body,{childList:true,subtree:true});\n      }\n    });\n    clean();\n  }\n  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',hook); else hook();\n})();\n</script>'''
-          if marker not in s:
-              s=s.replace('</body>\n</html>', marker+'\n'+cleanup+'\n</body>\n</html>', 1)
-          elif cleanup not in s:
-              s=s.replace(marker, marker+'\n'+cleanup, 1)
+          # These scripts are the source of the injected Home graph/contact redesign.
+          s=re.sub(r'\s*<script\s+src=["\']/(?:contact-demo|premium-redesign)\.js["\']\s*></script>', '', s, flags=re.I)
+          # Keep only the shared responsive frame helper; do not inject any Home redesign.
+          if '<script src="/responsive-frame.js"></script>' not in s:
+              s=s.replace('</body>\n</html>', '<script src="/responsive-frame.js"></script>\n</body>\n</html>', 1)
           p.write_text(s)
           PY
-      - name: Commit stable bundle
+      - name: Commit original Home bundle
         run: |
           if git diff --quiet; then exit 0; fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Remove injected Home graph and contact overlays'
+          git commit -m 'Stop Home redesign and contact injection scripts'
           git push
