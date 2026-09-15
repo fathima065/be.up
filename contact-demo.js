@@ -9,6 +9,11 @@
     instagram: 'https://instagram.com/'
   };
 
+  function isAllowedPage() {
+    var path = (window.location.pathname || '/').replace(/\/+$/, '') || '/';
+    return path === '/' || path === '/contact';
+  }
+
   function addStyles() {
     if (document.getElementById('beup-contact-demo-style')) return;
     var style = document.createElement('style');
@@ -31,6 +36,7 @@
   }
 
   function addContactActions() {
+    if (!isAllowedPage()) return;
     if (document.querySelector('.beup-contact-demo')) return;
     var wrap = document.createElement('div');
     wrap.className = 'beup-contact-demo';
@@ -44,7 +50,11 @@
   }
 
   function run() {
-    try { addStyles(); addContactActions(); } catch (e) { console.warn('be.up contact demo:', e); }
+    try {
+      if (!isAllowedPage()) return;
+      addStyles();
+      addContactActions();
+    } catch (e) { console.warn('be.up contact demo:', e); }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
