@@ -25,8 +25,11 @@ jobs:
           p=Path('index.html')
           s=p.read_text()
           marker='<script src="/responsive-frame.js"></script>'
+          cleanup='''<script>\n(function(){\n  function clean(){\n    var f=document.getElementById('page-frame');\n    if(!f || !f.contentDocument) return;\n    var d=f.contentDocument;\n    d.querySelectorAll('.beup-services-graph,.beup-contact-section').forEach(function(el){el.remove();});\n  }\n  function hook(){\n    var f=document.getElementById('page-frame');\n    if(!f) return;\n    f.addEventListener('load',function(){\n      clean();\n      if(f.contentDocument && f.contentDocument.body){\n        new MutationObserver(clean).observe(f.contentDocument.body,{childList:true,subtree:true});\n      }\n    });\n    clean();\n  }\n  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',hook); else hook();\n})();\n</script>'''
           if marker not in s:
-              s=s.replace('</body>\n</html>', marker+'\n</body>\n</html>', 1)
+              s=s.replace('</body>\n</html>', marker+'\n'+cleanup+'\n</body>\n</html>', 1)
+          elif cleanup not in s:
+              s=s.replace(marker, marker+'\n'+cleanup, 1)
           p.write_text(s)
           PY
       - name: Commit stable bundle
@@ -35,5 +38,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Stabilize production homepage and remove conflicting overlays'
+          git commit -m 'Remove injected Home graph and contact overlays'
           git push
