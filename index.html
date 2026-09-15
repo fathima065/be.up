@@ -145,29 +145,5 @@
 
 <script src="/responsive-fixes.js"></script>
 <script src="/responsive-frame.js"></script>
-<script>
-(function(){
-  function clean(){
-    var f=document.getElementById('page-frame');
-    if(!f || !f.contentDocument) return;
-    var d=f.contentDocument;
-    d.querySelectorAll('.beup-services-graph,.beup-contact-section').forEach(function(el){el.remove();});
-  }
-  function hook(){
-    var f=document.getElementById('page-frame');
-    if(!f) return;
-    f.addEventListener('load',function(){
-      clean();
-      if(f.contentDocument && f.contentDocument.body){
-        new MutationObserver(clean).observe(f.contentDocument.body,{childList:true,subtree:true});
-      }
-    });
-    clean();
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',hook); else hook();
-})();
-</script>
-<script src="/contact-demo.js"></script>
-<script src="/premium-redesign.js"></script>
 </body>
 </html>
