@@ -32,7 +32,8 @@ jobs:
             '<script src="/home-redesign.js"></script>',
             '<script src="/home-meta.js"></script>',
             '<script src="/home-production.js"></script>',
-            '<script src="/home-iframe-fix.js"></script>'
+            '<script src="/home-iframe-fix.js"></script>',
+            '<script src="/home-reference-style.js"></script>'
           ]:
             if marker not in s:
               s=s.replace('</body>\n</html>',marker+'\n</body>\n</html>',1)
@@ -44,5 +45,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Deploy final homepage redesign without changing other pages'
+          git commit -m 'Apply supplied landing page visual reference'
           git push
