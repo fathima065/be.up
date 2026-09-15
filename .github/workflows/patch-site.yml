@@ -1,4 +1,3 @@
-# one-time website patch
 name: Apply be.up website fixes
 
 on:
@@ -14,24 +13,102 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch website
+      - name: Patch website safely
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          s = s.replace('<div class="note">Each page below is the original file, rendered in its own isolated frame — so every page keeps its own styling and behavior exactly as built.</div>\n', '')
-          s = s.replace('        <div class="aud-card"><h4>Preparing to Scale</h4><p>Build the capabilities required for the next stage.</p></div>\n', '')
-          old = '''  function showPage(key){\n    if(!PAGES[key]){\n      errBanner.textContent = 'Page "' + key + '" was not found in this bundle.';\n      errBanner.style.display = 'block';\n      return;\n    }\n    errBanner.style.display = 'none';\n    frame.srcdoc = PAGES[key];\n    buttons.forEach(function(b){ b.classList.toggle('active', b.dataset.key === key); });\n  }\n\n  buttons.forEach(function(b){\n    b.addEventListener('click', function(){ showPage(b.dataset.key); });\n  });\n\n  showPage('home');'''
-          new = '''  var ROUTES = {\n    home: '/',\n    about: '/about',\n    approach: '/approach',\n    services: '/services',\n    industries: '/industries',\n    'industry-detail': '/industries/professional-services',\n    insights: '/insights',\n    'insights-article': '/insights/business-functions-working-against-each-other',\n    contact: '/contact',\n    checkup: '/business-growth-checkup',\n    book: '/book-consultation'\n  };\n\n  var PATH_TO_KEY = {};\n  Object.keys(ROUTES).forEach(function(key){ PATH_TO_KEY[ROUTES[key]] = key; });\n  PATH_TO_KEY['/business-growth-checkup'] = 'checkup';\n  PATH_TO_KEY['/book'] = 'book';\n  PATH_TO_KEY['/insights/sample-article'] = 'insights-article';\n\n  function keyForPath(path){\n    if(PATH_TO_KEY[path]) return PATH_TO_KEY[path];\n    if(/^\\/services\\//.test(path)) return 'services';\n    if(/^\\/industries\\//.test(path)) return path === '/industries/professional-services' ? 'industry-detail' : 'industries';\n    return null;\n  }\n\n  function showPage(key, updateUrl){\n    if(!PAGES[key]){\n      errBanner.textContent = 'Page "' + key + '" was not found in this bundle.';\n      errBanner.style.display = 'block';\n      return;\n    }\n    errBanner.style.display = 'none';\n    frame.srcdoc = PAGES[key];\n    buttons.forEach(function(b){ b.classList.toggle('active', b.dataset.key === key); });\n    if(updateUrl !== false && ROUTES[key] && window.location.pathname !== ROUTES[key]){\n      window.history.pushState({key:key}, '', ROUTES[key]);\n    }\n  }\n\n  function bindFrameLinks(){\n    try{\n      var doc = frame.contentDocument;\n      if(!doc) return;\n      doc.addEventListener('click', function(event){\n        var link = event.target.closest ? event.target.closest('a[href]') : null;\n        if(!link) return;\n        var raw = link.getAttribute('href');\n        if(!raw || raw.charAt(0) !== '/') return;\n        var path = raw.split('?')[0].split('#')[0];\n        var key = keyForPath(path);\n        if(key){\n          event.preventDefault();\n          event.stopPropagation();\n          showPage(key, true);\n        }\n      }, true);\n    }catch(e){}\n  }\n\n  buttons.forEach(function(b){\n    b.addEventListener('click', function(){ showPage(b.dataset.key, true); });\n  });\n  frame.addEventListener('load', bindFrameLinks);\n  window.addEventListener('popstate', function(){\n    showPage(keyForPath(window.location.pathname) || 'home', false);\n  });\n\n  showPage(keyForPath(window.location.pathname) || 'home', false);'''
-          if old not in s:
-              raise SystemExit('Expected navigation block not found; refusing to modify index.html')
-          s = s.replace(old, new, 1)
-          p.write_text(s, encoding='utf-8')
+
+          # Remove the explanatory shell note and the unwanted audience card,
+          # whether the text is escaped inside PAGES or plain HTML.
+          s = re.sub(r'<div class="note">\s*Each page below is the original file, rendered in its own isolated frame.*?</div>\s*', '', s, flags=re.S)
+          s = re.sub(r'<div class=\\?"aud-card\\?">\\?<h4>Preparing to Scale</h4>\\?<p>Build the capabilities required for the next stage\\?\.</p>\\?</div>\\?\\?n?', '', s)
+          s = re.sub(r'<div class="aud-card"><h4>Preparing to Scale</h4><p>Build the capabilities required for the next stage\.</p></div>', '', s)
+
+          # Replace the shell navigation controller without relying on the
+          # exact whitespace/formatting of the original file.
+          pattern = r'  function showPage\(key\)\{.*?showPage\(\x27home\x27\);'
+          replacement = r'''  var ROUTES = {
+    home: '/',
+    about: '/about',
+    approach: '/approach',
+    services: '/services',
+    industries: '/industries',
+    'industry-detail': '/industries/professional-services',
+    insights: '/insights',
+    'insights-article': '/insights/sample-article',
+    contact: '/contact',
+    checkup: '/business-growth-checkup',
+    book: '/book-consultation'
+  };
+
+  var PATH_TO_KEY = {};
+  Object.keys(ROUTES).forEach(function(key){ PATH_TO_KEY[ROUTES[key]] = key; });
+  PATH_TO_KEY['/business-growth-checkup'] = 'checkup';
+  PATH_TO_KEY['/book'] = 'book';
+  PATH_TO_KEY['/insights/sample-article'] = 'insights-article';
+
+  function keyForPath(path){
+    if(PATH_TO_KEY[path]) return PATH_TO_KEY[path];
+    if(/^\/services\//.test(path)) return 'services';
+    if(/^\/industries\//.test(path)) return path === '/industries/professional-services' ? 'industry-detail' : 'industries';
+    return null;
+  }
+
+  function showPage(key, updateUrl){
+    if(!PAGES[key]){
+      errBanner.textContent = 'Page "' + key + '" was not found in this bundle.';
+      errBanner.style.display = 'block';
+      return;
+    }
+    errBanner.style.display = 'none';
+    frame.srcdoc = PAGES[key];
+    buttons.forEach(function(b){ b.classList.toggle('active', b.dataset.key === key); });
+    if(updateUrl !== false && ROUTES[key] && window.location.pathname !== ROUTES[key]){
+      window.history.pushState({key:key}, '', ROUTES[key]);
+    }
+  }
+
+  function bindFrameLinks(){
+    try{
+      var doc = frame.contentDocument;
+      if(!doc) return;
+      doc.addEventListener('click', function(event){
+        var link = event.target.closest ? event.target.closest('a[href]') : null;
+        if(!link) return;
+        var raw = link.getAttribute('href');
+        if(!raw || raw.charAt(0) !== '/') return;
+        var path = raw.split('?')[0].split('#')[0];
+        var key = keyForPath(path);
+        if(key){
+          event.preventDefault();
+          event.stopPropagation();
+          showPage(key, true);
+        }
+      }, true);
+    }catch(e){}
+  }
+
+  buttons.forEach(function(b){
+    b.addEventListener('click', function(){ showPage(b.dataset.key, true); });
+  });
+  frame.addEventListener('load', bindFrameLinks);
+  window.addEventListener('popstate', function(){
+    showPage(keyForPath(window.location.pathname) || 'home', false);
+  });
+
+  showPage(keyForPath(window.location.pathname) || 'home', false);'''
+          s2, n = re.subn(pattern, replacement, s, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('Could not locate the shell navigation controller; no changes committed.')
+          p.write_text(s2, encoding='utf-8')
           PY
           git config user.name 'be.up Website Bot'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html .github/workflows/patch-site.yml
+          git diff --cached --check
           git commit -m 'Fix homepage navigation and simplify who we help'
           git push
