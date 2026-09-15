@@ -22,7 +22,8 @@ jobs:
           s = p.read_text()
           markers = [
               '<script src="/responsive-fixes.js"></script>',
-              '<script src="/responsive-frame.js"></script>'
+              '<script src="/responsive-frame.js"></script>',
+              '<script src="/contact-demo.js"></script>'
           ]
           needle = "</body>\n</html>"
           if needle not in s:
