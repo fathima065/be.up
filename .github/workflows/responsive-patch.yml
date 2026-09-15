@@ -1,51 +1,14 @@
 name: be.up responsive patch
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  patch:
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Restore bundled site and inject shared UI scripts
-        shell: bash
-        run: |
-          set -e
-          # Restore the last known-good multi-page bundle, then layer the homepage redesign on top.
-          git show 27ad1ab71696d0518c18dc2c1712075cebb9085f:index.html > index.html
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('index.html')
-          s = p.read_text()
-          markers = [
-              '<script src="/responsive-fixes.js"></script>',
-              '<script src="/responsive-frame.js"></script>',
-              '<script src="/contact-demo.js"></script>',
-              '<script src="/premium-redesign.js"></script>',
-              '<script src="/home-redesign.js"></script>'
-          ]
-          needle = "</body>\n</html>"
-          if needle not in s:
-              raise SystemExit('Could not find document footer marker')
-          for marker in markers:
-              if marker not in s:
-                  s = s.replace(needle, marker + "\n" + needle, 1)
-          p.write_text(s)
-          PY
-      - name: Commit patched bundle
-        run: |
-          if git diff --quiet; then
-            echo 'No patch needed.'
-            exit 0
-          fi
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html
-          git commit -m 'Restore multi-page bundle and apply homepage redesign'
-          git push
+      - name: Deprecated workflow
+        run: echo 'Deprecated: homepage-restore.yml is the only active site patch workflow.'
