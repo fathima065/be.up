@@ -30,7 +30,8 @@ jobs:
             '<script src="/contact-demo.js"></script>',
             '<script src="/premium-redesign.js"></script>',
             '<script src="/home-redesign.js"></script>',
-            '<script src="/home-meta.js"></script>'
+            '<script src="/home-meta.js"></script>',
+            '<script src="/home-production.js"></script>'
           ]:
             if marker not in s:
               s=s.replace('</body>\n</html>',marker+'\n</body>\n</html>',1)
