@@ -59,7 +59,6 @@
 <button class="navbtn" data-key="checkup">Business Growth Checkup</button>
 <button class="navbtn" data-key="book">Book a Consultation</button>
 </div>
-<div class="note">Each page below is the original file, rendered in its own isolated frame — so every page keeps its own styling and behavior exactly as built.</div>
 <div class="err-banner" id="err-banner"></div>
 
 <div class="frame-wrap">
@@ -72,7 +71,34 @@
   var buttons = document.querySelectorAll('.navbtn');
   var errBanner = document.getElementById('err-banner');
 
-  function showPage(key){
+  var ROUTES = {
+    home: '/',
+    about: '/about',
+    approach: '/approach',
+    services: '/services',
+    industries: '/industries',
+    'industry-detail': '/industries/professional-services',
+    insights: '/insights',
+    'insights-article': '/insights/business-functions-working-against-each-other',
+    contact: '/contact',
+    checkup: '/business-growth-checkup',
+    book: '/book-consultation'
+  };
+
+  var PATH_TO_KEY = {};
+  Object.keys(ROUTES).forEach(function(key){ PATH_TO_KEY[ROUTES[key]] = key; });
+  PATH_TO_KEY['/business-growth-checkup'] = 'checkup';
+  PATH_TO_KEY['/book'] = 'book';
+  PATH_TO_KEY['/insights/sample-article'] = 'insights-article';
+
+  function keyForPath(path){
+    if(PATH_TO_KEY[path]) return PATH_TO_KEY[path];
+    if(/^\/services\//.test(path)) return 'services';
+    if(/^\/industries\//.test(path)) return path === '/industries/professional-services' ? 'industry-detail' : 'industries';
+    return null;
+  }
+
+  function showPage(key, updateUrl){
     if(!PAGES[key]){
       errBanner.textContent = 'Page "' + key + '" was not found in this bundle.';
       errBanner.style.display = 'block';
@@ -81,13 +107,40 @@
     errBanner.style.display = 'none';
     frame.srcdoc = PAGES[key];
     buttons.forEach(function(b){ b.classList.toggle('active', b.dataset.key === key); });
+    if(updateUrl !== false && ROUTES[key] && window.location.pathname !== ROUTES[key]){
+      window.history.pushState({key:key}, '', ROUTES[key]);
+    }
+  }
+
+  function bindFrameLinks(){
+    try{
+      var doc = frame.contentDocument;
+      if(!doc) return;
+      doc.addEventListener('click', function(event){
+        var link = event.target.closest ? event.target.closest('a[href]') : null;
+        if(!link) return;
+        var raw = link.getAttribute('href');
+        if(!raw || raw.charAt(0) !== '/') return;
+        var path = raw.split('?')[0].split('#')[0];
+        var key = keyForPath(path);
+        if(key){
+          event.preventDefault();
+          event.stopPropagation();
+          showPage(key, true);
+        }
+      }, true);
+    }catch(e){}
   }
 
   buttons.forEach(function(b){
-    b.addEventListener('click', function(){ showPage(b.dataset.key); });
+    b.addEventListener('click', function(){ showPage(b.dataset.key, true); });
+  });
+  frame.addEventListener('load', bindFrameLinks);
+  window.addEventListener('popstate', function(){
+    showPage(keyForPath(window.location.pathname) || 'home', false);
   });
 
-  showPage('home');
+  showPage(keyForPath(window.location.pathname) || 'home', false);
 </script>
 
 </body>
