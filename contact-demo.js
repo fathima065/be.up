@@ -1,11 +1,12 @@
-/* be.up easy-contact demo actions. Replace the three demo destinations later. */
+/* be.up easy-contact demo actions. Replace the demo destinations later. */
 (function () {
   'use strict';
 
   var DEMO = {
     email: 'hello@example.com',
     phone: '+910000000000',
-    whatsapp: '910000000000'
+    whatsapp: '910000000000',
+    instagram: 'https://instagram.com/'
   };
 
   function addStyles() {
@@ -18,10 +19,11 @@
       .beup-contact-demo .email{background:#fff;color:#0B1F3A}
       .beup-contact-demo .call{background:#1FA37A;color:#0B1F3A}
       .beup-contact-demo .whatsapp{background:#2E7DA8;color:#fff}
+      .beup-contact-demo .instagram{background:#E8D7C8;color:#0B1F3A}
       @media(max-width:767px){
         body{padding-bottom:72px!important}
-        .beup-contact-demo{left:0;right:0;bottom:0;border-radius:0;padding:8px 10px;gap:7px;justify-content:stretch}
-        .beup-contact-demo a{flex:1;min-width:0;padding:11px 6px;font-size:12px;border-radius:7px}
+        .beup-contact-demo{left:0;right:0;bottom:0;border-radius:0;padding:8px 10px;gap:6px;justify-content:stretch}
+        .beup-contact-demo a{flex:1;min-width:0;padding:11px 5px;font-size:11px;border-radius:7px}
       }
       @media(prefers-reduced-motion:reduce){.beup-contact-demo{backdrop-filter:none}}
     `;
@@ -36,7 +38,8 @@
     wrap.innerHTML =
       '<a class="email" href="mailto:' + DEMO.email + '">Email Consultation</a>' +
       '<a class="call" href="tel:' + DEMO.phone + '">Call Consultation</a>' +
-      '<a class="whatsapp" href="https://wa.me/' + DEMO.whatsapp + '" target="_blank" rel="noopener">WhatsApp Enquiry</a>';
+      '<a class="whatsapp" href="https://wa.me/' + DEMO.whatsapp + '" target="_blank" rel="noopener">WhatsApp</a>' +
+      '<a class="instagram" href="' + DEMO.instagram + '" target="_blank" rel="noopener">Instagram</a>';
     document.body.appendChild(wrap);
   }
 
