@@ -17,8 +17,8 @@ jobs:
         shell: bash
         run: |
           set -e
-          # Preserve the existing multi-page bundle for every route except the homepage.
-          git show 4c76b135a2c2f1748f4d13944a9459f58d7b73c5:index.html > index.html
+          # Restore the last known-good multi-page bundle, then layer the homepage redesign on top.
+          git show 27ad1ab71696d0518c18dc2c1712075cebb9085f:index.html > index.html
           python - <<'PY'
           from pathlib import Path
           p = Path('index.html')
