@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Restore known-good bundle and inject production site layer
+      - name: Restore known-good bundle and keep original homepage
         shell: bash
         run: |
           set -e
@@ -28,14 +28,7 @@ jobs:
             '<script src="/responsive-fixes.js"></script>',
             '<script src="/responsive-frame.js"></script>',
             '<script src="/contact-demo.js"></script>',
-            '<script src="/premium-redesign.js"></script>',
-            '<script src="/home-redesign.js"></script>',
-            '<script src="/home-meta.js"></script>',
-            '<script src="/home-production.js"></script>',
-            '<script src="/home-iframe-fix.js"></script>',
-            '<script src="/home-reference-style.js"></script>',
-            '<script src="/site-production.js"></script>',
-            '<script src="/site-shell.js"></script>'
+            '<script src="/premium-redesign.js"></script>'
           ]
           for marker in markers:
             if marker not in s:
@@ -48,5 +41,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Apply complete production site redesign and routing'
+          git commit -m 'Remove new landing page overlay'
           git push
